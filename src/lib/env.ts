@@ -19,13 +19,6 @@ export function getNumberEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function getCountries(): string[] {
-  return (process.env.DEFAULT_AD_COUNTRIES ?? "US,MY,SG")
-    .split(",")
-    .map((country) => country.trim().toUpperCase())
-    .filter(Boolean);
-}
-
 export function getBooleanEnv(name: string, fallback = false): boolean {
   const value = process.env[name];
 

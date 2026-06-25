@@ -85,8 +85,12 @@ async function generateWithOpenAI(
               `Create ${ideasPerAd} ideas per source ad.`,
               "Prefer Video and Single Image formats.",
               "Creative Signal must explain what signal was detected from the source ad.",
+              "Target Audience must infer who the source ad is speaking to.",
+              "Underlying Logic must explain why this creative may be worth scaling.",
+              "Winning Framework must name the reusable content framework behind the ad.",
               "Micro Segment must be specific enough to brief a creator.",
-              "Image Prompt must be a prompt for generating a static ad image, not a video prompt.",
+              "Video Script must preserve scraped source transcript if present; otherwise create a concise original 30-45 second script for video execution.",
+              "Image Prompt must be a complete ChatGPT Image 2 ready-to-build prompt for generating a static ad image. Include aspect ratio, subject, layout, headline placement, visual style, and negative constraints.",
               "Use only these funnel stages: Awareness, Consideration, Conversion, Retention.",
               "Use only these content formats: Video, Single Image, Carousel, Unknown."
             ],
@@ -98,6 +102,12 @@ async function generateWithOpenAI(
               body: ad.body,
               description: ad.description,
               caption: ad.caption,
+              sourceFormat: ad.sourceFormat,
+              creativeType: ad.creativeType,
+              creativeMediaUrl: ad.creativeMediaUrl,
+              ctaButton: ad.ctaButton,
+              ctaLink: ad.ctaLink,
+              videoScript: ad.videoScript,
               platforms: ad.platforms,
               firstSeen: ad.firstSeen,
               snapshotUrl: ad.snapshotUrl
@@ -126,10 +136,14 @@ async function generateWithOpenAI(
                     "hook",
                     "coreAngle",
                     "creativeSignal",
+                    "targetAudience",
+                    "underlyingLogic",
+                    "winningFramework",
                     "microSegment",
                     "funnelStage",
                     "contentIdea",
                     "imagePrompt",
+                    "videoScript",
                     "signalScore"
                   ],
                   properties: {
@@ -141,6 +155,9 @@ async function generateWithOpenAI(
                     hook: { type: "string" },
                     coreAngle: { type: "string" },
                     creativeSignal: { type: "string" },
+                    targetAudience: { type: "string" },
+                    underlyingLogic: { type: "string" },
+                    winningFramework: { type: "string" },
                     microSegment: { type: "string" },
                     funnelStage: {
                       type: "string",
@@ -153,6 +170,7 @@ async function generateWithOpenAI(
                     },
                     contentIdea: { type: "string" },
                     imagePrompt: { type: "string" },
+                    videoScript: { type: "string" },
                     signalScore: { type: "number", minimum: 1, maximum: 10 }
                   }
                 }
@@ -204,6 +222,7 @@ function sanitizeIdea(idea: GeneratedIdea): GeneratedIdea {
     funnelStage: FUNNELS.includes(idea.funnelStage)
       ? idea.funnelStage
       : "Consideration",
+    videoScript: idea.videoScript || "",
     signalScore: Math.max(1, Math.min(10, Number(idea.signalScore) || 5))
   };
 }
@@ -222,17 +241,21 @@ function generateHeuristicIdeas(
       hook: makeHook(ad, format),
       coreAngle: makeCoreAngle(ad),
       creativeSignal: baseSignal,
+      targetAudience: makeTargetAudience(ad),
+      underlyingLogic: makeUnderlyingLogic(ad),
+      winningFramework: makeWinningFramework(ad),
       microSegment: makeMicroSegment(ad),
       funnelStage: detectFunnel(ad),
       contentIdea: makeContentIdea(ad, format),
       imagePrompt: makeImagePrompt(ad),
+      videoScript: makeVideoScript(ad, format),
       signalScore: scoreAd(ad)
     }));
   });
 }
 
 function allText(ad: NormalizedAd): string {
-  return [ad.title, ad.body, ad.description, ad.caption]
+  return [ad.title, ad.body, ad.description, ad.caption, ad.ctaButton, ad.videoScript]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -253,6 +276,57 @@ function detectSignal(ad: NormalizedAd): string {
     return "教学型入口，利用具体技能缺口引导用户进入长内容转化。";
   }
   return "直接结果承诺搭配具体机制，适合拆成痛点、对比、步骤和证明。";
+}
+
+function makeTargetAudience(ad: NormalizedAd): string {
+  const text = allText(ad);
+  if (ad.competitor === "Alex Hormozi") {
+    return "已经有 offer、团队或现金流，但增长仍被创始人亲自执行卡住的老板。";
+  }
+  if (ad.competitor === "Dan Henry" || text.includes("webinar")) {
+    return "卖课程、咨询、coaching 或 high-ticket 服务，但转化流程还不稳定的知识型创业者。";
+  }
+  if (ad.competitor === "PengJoon") {
+    return "想把知识、AI 工具或线上产品变成可规模化收入的 marketer / creator。";
+  }
+  if (ad.competitor === "Reeve Yew") {
+    return "想用 AI 或副业赚第一笔可观收入，但缺具体机制和执行路线的新手创业者。";
+  }
+  if (text.includes("ai") || text.includes("clone")) {
+    return "已经使用 AI 工具，但还没把个人经验变成可复制系统的 solo founder。";
+  }
+  return "有产品、有内容需求，但需要更清晰 hook 和购买理由的中小型创业者。";
+}
+
+function makeUnderlyingLogic(ad: NormalizedAd): string {
+  const text = allText(ad);
+  if (text.includes("free") || text.includes("免费")) {
+    return "先用免费入口降低风险感，再用训练、模板或诊断把用户带进更深的转化链路。";
+  }
+  if (text.match(/\d/)) {
+    return "数字让承诺变得具体，用户更容易判断这个机制是否值得点击或报名。";
+  }
+  if (text.includes("ai") || text.includes("clone")) {
+    return "把复杂劳动包装成杠杆系统，让用户相信同样的结果可以用更少时间复制。";
+  }
+  if (text.includes("webinar") || text.includes("training")) {
+    return "用教学场景建立权威，再把信息差转化成下一步行动。";
+  }
+  return "用明确痛点打开注意力，再给出一个看起来可执行的机制，让用户从怀疑转到想了解。";
+}
+
+function makeWinningFramework(ad: NormalizedAd): string {
+  const text = allText(ad);
+  if (text.includes("ai") || text.includes("clone")) {
+    return "Painful bottleneck -> AI mechanism -> proof/contrast -> low-friction CTA.";
+  }
+  if (text.includes("webinar") || text.includes("training")) {
+    return "Skill gap -> short training promise -> authority proof -> registration CTA.";
+  }
+  if (text.includes("free") || text.includes("免费")) {
+    return "Risk reversal -> specific asset/training -> fast first win -> nurture path.";
+  }
+  return "Specific pain -> named mechanism -> concrete outcome -> next small action.";
 }
 
 function makeHook(ad: NormalizedAd, format: ContentFormat): string {
@@ -329,12 +403,30 @@ function makeContentIdea(ad: NormalizedAd, format: ContentFormat): string {
 
 function makeImagePrompt(ad: NormalizedAd): string {
   return [
-    "Create a high-converting static Facebook/Instagram ad image, clean direct-response layout,",
-    "Asian entrepreneur at a laptop reviewing an AI workflow dashboard,",
-    "bold headline space at top, three-step mechanism cards in the middle,",
-    "subtle proof metric area at bottom, modern SaaS/coaching aesthetic,",
-    "high contrast, realistic photography blended with crisp UI overlays, no fake logos."
+    "ChatGPT Image 2 prompt: Create a 4:5 high-converting Facebook/Instagram static ad image.",
+    "Subject: Asian entrepreneur at a laptop reviewing a simple growth/AI workflow dashboard.",
+    "Layout: bold headline area at the top, three-step mechanism cards in the middle, subtle proof metric strip at the bottom, clear CTA button area.",
+    "Style: realistic photography blended with crisp UI overlays, modern direct-response coaching/SaaS aesthetic, high contrast, clean whitespace.",
+    "Text placeholders: include readable placeholder zones only; do not invent fake logos or unreadable tiny text.",
+    "Negative constraints: no fake brand logos, no distorted hands, no clutter, no excessive gradients."
   ].join(" ");
+}
+
+function makeVideoScript(ad: NormalizedAd, format: ContentFormat): string {
+  if (ad.videoScript) {
+    return ad.videoScript;
+  }
+
+  if (format !== "Video") {
+    return "";
+  }
+
+  return [
+    "0-3s Hook: 你现在卡住的增长问题，通常不是流量不够，而是机制还没被拆清楚。",
+    "3-12s Pain: 每天亲自救火、改内容、追销售，团队越大你越忙。",
+    "12-28s Mechanism: 用一个三步框架把痛点、证明和下一步行动拆出来，先复制判断，再复制执行。",
+    "28-40s Proof/CTA: 先测试一个低门槛内容或训练入口，看到用户反应后再放大。"
+  ].join("\n");
 }
 
 function scoreAd(ad: NormalizedAd): number {
@@ -344,6 +436,6 @@ function scoreAd(ad: NormalizedAd): number {
   if (text.includes("ai") || text.includes("clone") || text.includes("claude")) score += 1;
   if (text.match(/\d/)) score += 1;
   if (text.includes("trial") || text.includes("access")) score += 1;
-  if (ad.snapshotUrl) score += 1;
+  if (ad.snapshotUrl || ad.creativeMediaUrl) score += 1;
   return Math.min(score, 10);
 }

@@ -1,7 +1,7 @@
 import { COMPETITORS } from "./competitors";
 import { todayIso } from "./date";
 import { getBooleanEnv, getNumberEnv } from "./env";
-import { fetchCompetitorAds } from "./meta-ad-library";
+import { fetchCompetitorAds } from "./ad-library-scraper";
 import { createIdeaPage, ideaExists } from "./notion";
 import { generateIdeasForAds } from "./openai-ideas";
 import type {
@@ -38,7 +38,9 @@ export async function runAdsToNotionPipeline(
       fetchedAds += ads.length;
     } catch (error) {
       warnings.push(
-        error instanceof Error ? error.message : `Meta fetch failed: ${error}`
+        error instanceof Error
+          ? error.message
+          : `Ads Library fetch failed: ${error}`
       );
       continue;
     }
@@ -104,12 +106,25 @@ function toRecord(
     pageId: ad.pageId,
     pageName: ad.pageName,
     sourceAdUrl: ad.snapshotUrl,
+    sourceHeadline: ad.title,
+    sourceCaptions: sourceCaptions(ad),
+    creativeType: ad.creativeType,
+    creativeMediaUrl: ad.creativeMediaUrl,
+    ctaButton: ad.ctaButton,
+    ctaLink: ad.ctaLink,
+    videoScript: ad.videoScript || idea.videoScript,
+    useThisCreativeAndText: Boolean(
+      (ad.creativeMediaUrl || ad.videoScript) &&
+        (ad.title || ad.body || ad.caption || ad.description)
+    ),
     platforms: ad.platforms,
     firstSeen: ad.firstSeen,
-    lastSeen: ad.lastSeen,
-    generatedAt,
-    rawAdJson: JSON.stringify(ad.raw)
+    generatedAt
   };
+}
+
+function sourceCaptions(ad: NormalizedAd): string {
+  return [ad.body, ad.caption, ad.description].filter(Boolean).join("\n\n");
 }
 
 function slug(value: string): string {

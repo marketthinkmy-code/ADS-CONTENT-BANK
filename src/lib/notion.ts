@@ -46,8 +46,19 @@ export async function createIdeaPage(record: IdeaRecord): Promise<string> {
       properties: toNotionProperties(record),
       children: [
         paragraph(`Source ad: ${record.sourceAdUrl}`),
-        paragraph(`Raw competitor signal: ${record.creativeSignal}`),
-        paragraph(`Execution note: ${record.contentIdea}`)
+        paragraph(`Headline: ${record.sourceHeadline}`),
+        paragraph(`Captions: ${record.sourceCaptions}`),
+        paragraph(`Creative media: ${record.creativeMediaUrl || "Not provided by scraper."}`),
+        paragraph(`CTA: ${record.ctaButton || "Unknown"} ${record.ctaLink || ""}`),
+        paragraph(`Video script: ${record.videoScript || "Not provided by scraper or generator."}`),
+        paragraph(`Target audience: ${record.targetAudience}`),
+        paragraph(`Content angle: ${record.coreAngle}`),
+        paragraph(`Hook: ${record.hook}`),
+        paragraph(`Creative signal: ${record.creativeSignal}`),
+        paragraph(`Underlying logic: ${record.underlyingLogic}`),
+        paragraph(`Reusable framework: ${record.winningFramework}`),
+        paragraph(`Execution idea: ${record.contentIdea}`),
+        paragraph(`Image prompt: ${record.imagePrompt}`)
       ]
     })
   });
@@ -86,9 +97,21 @@ function toNotionProperties(record: IdeaRecord) {
     Status: select("New"),
     Competitor: select(record.competitor),
     "Content Format": select(record.contentFormat),
+    "Creative Type": select(record.creativeType),
+    Headline: richText(record.sourceHeadline),
+    Captions: richText(record.sourceCaptions),
+    "CTA Button": richText(record.ctaButton),
+    "CTA Link": { url: record.ctaLink || null },
+    "Creative Media URL": { url: record.creativeMediaUrl || null },
+    "Creative Media": creativeFile(record),
+    "Video Script": richText(record.videoScript, 5),
+    "Use This Creative And Text": checkbox(record.useThisCreativeAndText),
     "Content Idea": richText(record.contentIdea),
     "Core Angle": richText(record.coreAngle),
     "Creative Signal": richText(record.creativeSignal),
+    "Target Audience": richText(record.targetAudience),
+    "Underlying Logic": richText(record.underlyingLogic),
+    "Winning Framework": richText(record.winningFramework),
     "Funnel Stage": select(record.funnelStage),
     Hook: richText(record.hook),
     "Image Prompt": richText(record.imagePrompt),
@@ -99,11 +122,9 @@ function toNotionProperties(record: IdeaRecord) {
     Platforms: {
       multi_select: record.platforms.map((name) => ({ name }))
     },
-    "Raw Ad JSON": richText(record.rawAdJson, 1),
     "Signal Score": { number: record.signalScore },
     "Source Ad URL": { url: record.sourceAdUrl || null },
     "First Seen": record.firstSeen ? date(record.firstSeen) : emptyDate(),
-    "Last Seen": record.lastSeen ? date(record.lastSeen) : emptyDate(),
     "Generated At": date(record.generatedAt)
   };
 }
@@ -124,6 +145,28 @@ function richText(content: string, maxChunks = 3) {
 
 function select(name: string) {
   return { select: { name } };
+}
+
+function checkbox(checked: boolean) {
+  return { checkbox: checked };
+}
+
+function creativeFile(record: IdeaRecord) {
+  if (!record.creativeMediaUrl) {
+    return { files: [] };
+  }
+
+  return {
+    files: [
+      {
+        name: `${record.competitor} ${record.creativeType} creative`,
+        type: "external",
+        external: {
+          url: record.creativeMediaUrl
+        }
+      }
+    ]
+  };
 }
 
 function date(start: string) {

@@ -23,11 +23,12 @@ type SyncResult = {
   error?: string;
 };
 
-const REQUIRED_SECRETS = [
-  "CRON_SECRET",
-  "META_ACCESS_TOKEN",
-  "NOTION_API_KEY",
-  "OPENAI_API_KEY"
+const CLOUD_VARIABLES = [
+  { name: "CRON_SECRET", badge: "required" },
+  { name: "SCRAPER_API_URL", badge: "required" },
+  { name: "SCRAPER_API_KEY", badge: "if needed" },
+  { name: "NOTION_API_KEY", badge: "required" },
+  { name: "OPENAI_API_KEY", badge: "required" }
 ];
 
 export default function Home() {
@@ -85,12 +86,12 @@ export default function Home() {
           <div>
             <div className="eyebrow">
             <Cloud size={16} />
-            Vercel Cloud Cron · Meta Ad Library · Notion
+            Vercel Cloud Cron · Ads Library Scraper · Notion
             </div>
             <h1>ADS Content Bank 自动化控制台</h1>
             <p>
-              云端读取竞品广告信号，生成 micro-segment angle、hook、视频/单图 idea
-              和 image prompt，然后写入 Notion。
+              云端读取公开 Ads Library 页面，生成 micro-segment angle、hook、视频/单图
+              idea、target audience 和底层框架，然后写入 Notion。
             </p>
           </div>
         </div>
@@ -202,16 +203,24 @@ export default function Home() {
             </div>
           </div>
           <div className="secret-list">
-            {REQUIRED_SECRETS.map((item) => (
-              <div className="secret-item" key={item}>
-                <span>{item}</span>
-                <code>required</code>
+            {CLOUD_VARIABLES.map((item) => (
+              <div className="secret-item" key={item.name}>
+                <span>{item.name}</span>
+                <code>{item.badge}</code>
               </div>
             ))}
           </div>
           <div className="deploy-note">
             <strong>Schedule</strong>
             <span>Vercel Cron: 0 1 * * * / 09:00 Malaysia time</span>
+          </div>
+          <div className="deploy-note">
+            <strong>Scraper contract</strong>
+            <span>POST Ads Library URL, page ID, page name, active status, and limit. Return ads with headline, captions, CTA, media URL, and video script/transcript when available.</span>
+          </div>
+          <div className="deploy-note">
+            <strong>Notion output</strong>
+            <span>Creative media, headline, captions, hook, CTA, target audience, framework logic, video script, single-image prompt.</span>
           </div>
           <div className="deploy-note">
             <strong>Notion target</strong>

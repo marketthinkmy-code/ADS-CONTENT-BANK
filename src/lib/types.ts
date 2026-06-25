@@ -1,5 +1,7 @@
 export type ContentFormat = "Video" | "Single Image" | "Carousel" | "Unknown";
 
+export type CreativeType = "Video" | "Image" | "Carousel" | "Unknown";
+
 export type FunnelStage =
   | "Awareness"
   | "Consideration"
@@ -16,39 +18,30 @@ export type Competitor = {
   name: CompetitorName;
   pageId: string;
   activeStatus: "ACTIVE" | "ALL";
+  libraryUrl: string;
 };
 
-export type MetaAd = {
-  id: string;
-  page_id?: string | number;
-  page_name?: string;
-  ad_creation_time?: string | number;
-  ad_delivery_start_time?: string | number;
-  ad_delivery_stop_time?: string | number;
-  ad_snapshot_url?: string;
-  publisher_platforms?: string[];
-  ad_creative_bodies?: string[];
-  ad_creative_link_captions?: string[];
-  ad_creative_link_descriptions?: string[];
-  ad_creative_link_titles?: string[];
-  currency?: string;
-  [key: string]: unknown;
-};
+export type RawAd = Record<string, unknown>;
 
 export type NormalizedAd = {
   id: string;
   pageId: string;
   pageName: string;
   competitor: CompetitorName;
+  sourceFormat: ContentFormat;
+  creativeType: CreativeType;
   title: string;
   body: string;
   description: string;
   caption: string;
   snapshotUrl: string;
+  creativeMediaUrl: string;
+  ctaButton: string;
+  ctaLink: string;
+  videoScript: string;
   platforms: string[];
   firstSeen: string | null;
-  lastSeen: string | null;
-  raw: MetaAd;
+  raw: RawAd;
 };
 
 export type GeneratedIdea = {
@@ -57,10 +50,14 @@ export type GeneratedIdea = {
   hook: string;
   coreAngle: string;
   creativeSignal: string;
+  targetAudience: string;
+  underlyingLogic: string;
+  winningFramework: string;
   microSegment: string;
   funnelStage: FunnelStage;
   contentIdea: string;
   imagePrompt: string;
+  videoScript: string;
   signalScore: number;
 };
 
@@ -71,11 +68,17 @@ export type IdeaRecord = GeneratedIdea & {
   pageId: string;
   pageName: string;
   sourceAdUrl: string;
+  sourceHeadline: string;
+  sourceCaptions: string;
+  creativeType: CreativeType;
+  creativeMediaUrl: string;
+  ctaButton: string;
+  ctaLink: string;
+  videoScript: string;
+  useThisCreativeAndText: boolean;
   platforms: string[];
   firstSeen: string | null;
-  lastSeen: string | null;
   generatedAt: string;
-  rawAdJson: string;
 };
 
 export type PipelineResult = {

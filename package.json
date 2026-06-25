@@ -2,6 +2,9 @@
   "name": "ads-content-bank-cloud-cron",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,10 +17,10 @@
     "react-dom": "latest"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "@types/node": "20.19.25",
+    "@types/react": "19.0.12",
+    "@types/react-dom": "19.0.4",
+    "typescript": "5.4.5"
   },
   "packageManager": "pnpm@11.7.0"
 }
