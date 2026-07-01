@@ -1,0 +1,10 @@
+# whisper 模型（1.5GB，每人各自 setup.sh 下载，不进仓库）
+models/*.bin
+
+# 爬取产物（视频/音频/截图/转录都是本地素材，不进仓库）
+ad_inspiration/*
+!ad_inspiration/.gitkeep
+
+# 系统 / 杂项
+.DS_Store
+*.log
